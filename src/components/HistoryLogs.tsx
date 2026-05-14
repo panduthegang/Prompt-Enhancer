@@ -138,13 +138,13 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
 
                     {/* Pagination - Moved to Top */}
                     {totalPages > 1 && (
-                      <div className="flex items-center gap-2 border-l border-border pl-4 h-8">
+                      <div className="flex items-center gap-2 border-l border-border pl-4 h-">
                         <button
                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
                           className="p-1.5 border border-border hover:border-foreground transition-colors disabled:opacity-20 group"
                         >
-                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <ChevronLeft className="w-5 h-5" />
                         </button>
                         <div className="flex items-center gap-1.5">
                           {Array.from({ length: totalPages }).map((_, i) => (
@@ -152,7 +152,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                               key={i}
                               onClick={() => setCurrentPage(i + 1)}
                               className={cn(
-                                "w-6 h-6 text-[9px] font-bold transition-all border",
+                                "w-7 h-7 text-[15px] font-bold transition-all border",
                                 currentPage === i + 1 
                                   ? "bg-foreground text-background border-foreground" 
                                   : "bg-transparent text-muted-foreground border-border hover:border-foreground"
@@ -167,7 +167,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                           disabled={currentPage === totalPages}
                           className="p-1.5 border border-border hover:border-foreground transition-colors disabled:opacity-20 group"
                         >
-                          <ChevronRight className="w-3.5 h-3.5" />
+                          <ChevronRight className="w-5 h-5" />
                         </button>
                       </div>
                     )}
