@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import { cn } from "../lib/utils";
 
-export type AppState = "idle" | "detecting" | "confirming" | "enhancing" | "result";
+export type AppState = "idle" | "detecting" | "confirming" | "enhancing" | "result" | "error";
 
 export const WORKFLOW_STEPS = [
   { id: "input", label: "Input", states: ["idle", "detecting", "confirming", "enhancing", "result"] },

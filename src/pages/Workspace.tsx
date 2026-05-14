@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { detectIntent, enhancePrompt } from "../services/geminiService";
 import { PromptHistory, IntentDetectionResult, EnhancementResult } from "../types";
@@ -50,12 +50,16 @@ export default function Workspace({ user, onLogout }: WorkspaceProps) {
     if (!input.trim() || appState !== "idle") return;
     setAppState("detecting");
     
-    const intent = await detectIntent(input);
-    if (intent) {
-      setCurrentIntent(intent);
-      setAppState("confirming");
-    } else {
-      setAppState("idle");
+    try {
+      const intent = await detectIntent(input);
+      if (intent) {
+        setCurrentIntent(intent);
+        setAppState("confirming");
+      } else {
+        setAppState("error");
+      }
+    } catch {
+      setAppState("error");
     }
   };
 
@@ -67,23 +71,27 @@ export default function Workspace({ user, onLogout }: WorkspaceProps) {
 
     setAppState("enhancing");
     if (currentIntent) {
-      const result = await enhancePrompt(currentIntent);
-      if (result) {
-        setCurrentResult(result);
-        setAppState("result");
-        
-        const newHistoryItem: PromptHistory = {
-          id: Date.now().toString(),
-          timestamp: Date.now(),
-          original: currentIntent.cleanedInput,
-          optimized: result.optimizedPrompt,
-          category: currentIntent.category,
-        };
-        const updated = [newHistoryItem, ...history.slice(0, 49)];
-        setHistory(updated);
-        localStorage.setItem("promptEngineHistory", JSON.stringify(updated));
-      } else {
-        setAppState("idle");
+      try {
+        const result = await enhancePrompt(currentIntent);
+        if (result) {
+          setCurrentResult(result);
+          setAppState("result");
+          
+          const newHistoryItem: PromptHistory = {
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            original: currentIntent.cleanedInput,
+            optimized: result.optimizedPrompt,
+            category: currentIntent.category,
+          };
+          const updated = [newHistoryItem, ...history.slice(0, 49)];
+          setHistory(updated);
+          localStorage.setItem("promptEngineHistory", JSON.stringify(updated));
+        } else {
+          setAppState("error");
+        }
+      } catch {
+        setAppState("error");
       }
     }
   };
@@ -92,6 +100,14 @@ export default function Workspace({ user, onLogout }: WorkspaceProps) {
     navigator.clipboard.writeText(text);
     setCopiedPrompt(text);
     setTimeout(() => setCopiedPrompt(null), 2000);
+  };
+
+  const handleToggleFavorite = (id: string) => {
+    const updated = history.map(item => 
+      item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
+    );
+    setHistory(updated);
+    localStorage.setItem("promptEngineHistory", JSON.stringify(updated));
   };
 
   const reset = () => {
@@ -132,6 +148,28 @@ export default function Workspace({ user, onLogout }: WorkspaceProps) {
 
           {appState === "enhancing" && <EnhancingState />}
 
+          {appState === "error" && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full max-w-2xl bg-background border border-border p-8 shadow-2xl text-center space-y-6"
+            >
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Connection Error</p>
+                <h3 className="text-lg font-bold">Could not reach the AI engine.</h3>
+                <p className="text-sm text-muted-foreground">This is usually caused by an invalid API key or a network issue. Please check your <code className="bg-muted px-1">VITE_GEMINI_API_KEY</code> environment variable and try again.</p>
+              </div>
+              <button
+                onClick={reset}
+                className="px-6 py-3 border border-foreground bg-foreground text-background uppercase tracking-widest text-xs font-bold hover:bg-background hover:text-foreground transition-all"
+              >
+                Try Again
+              </button>
+            </motion.div>
+          )}
+
           {appState === "result" && currentResult && (
             <PromptResult 
               result={currentResult} 
@@ -148,6 +186,7 @@ export default function Workspace({ user, onLogout }: WorkspaceProps) {
         appState={appState} 
         onCopy={handleCopy} 
         copiedPrompt={copiedPrompt} 
+        onToggleFavorite={handleToggleFavorite}
       />
     </>
   );

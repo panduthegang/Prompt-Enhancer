@@ -36,4 +36,5 @@ export interface PromptHistory {
   original: string;
   optimized: string;
   category: PromptCategory;
+  isFavorite?: boolean;
 }
