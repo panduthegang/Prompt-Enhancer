@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Moon, Sun, ArrowRight, Copy, Check, Info, Sparkles, CheckCircle2, Circle, Search, Filter, ChevronDown } from "lucide-react";
+import { Mic, Moon, Sun, ArrowRight, Copy, Check, Info, Sparkles, CheckCircle2, Circle, Search, Filter, ChevronDown, LogOut, User } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
 
 import { detectIntent, enhancePrompt } from "./services/geminiService";
 import { IntentDetectionResult, EnhancementResult, PromptHistory, PromptCategory } from "./types";
 import { cn } from "./lib/utils";
-import AuthPage from "./AuthPage";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+
 
 import {
   Dialog,
@@ -39,8 +41,10 @@ const EXAMPLES: { category: PromptCategory, text: string }[] = [
 ];
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<{ username: string, email: string } | null>(null);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [appState, setAppState] = useState<AppState>("idle");
@@ -181,10 +185,6 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
-  if (!isAuthenticated) {
-    return <AuthPage onLogin={() => setIsAuthenticated(true)} />;
-  }
-
   return (
     <div className="relative min-h-screen font-mono text-foreground overflow-x-hidden selection:bg-foreground selection:text-background flex flex-col">
       {/* Background with Fade */}
@@ -192,8 +192,51 @@ export default function App() {
       <div className="fixed inset-0 z-[-1] bg-grid-pattern" />
       <div className="fixed inset-0 z-[-1] bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50">
+      <AnimatePresence mode="wait">
+        {!user ? (
+          <motion.div
+            key="auth"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <AnimatePresence mode="wait">
+              {authMode === "signin" ? (
+                <motion.div
+                  key="signin"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full"
+                >
+                  <SignIn onLogin={(u) => setUser(u)} onSwitchToSignUp={() => setAuthMode("signup")} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="signup"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full"
+                >
+                  <SignUp onLogin={(u) => setUser(u)} onSwitchToSignIn={() => setAuthMode("signin")} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="app-content"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col w-full"
+          >
+            {/* Header */}
+            <header className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50">
+
         <div className="flex flex-col">
            <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
              <Sparkles className="w-5 h-5 fill-current" /> P.E.E
@@ -201,24 +244,45 @@ export default function App() {
            <span className="text-[10px] tracking-widest text-muted-foreground uppercase">Prompt Enhancement Engine</span>
         </div>
         
-        {/* Modern Theme Toggle */}
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="relative flex items-center w-16 h-8 bg-background border border-border outline-none overflow-hidden group hover:border-foreground transition-colors"
-          aria-label="Toggle theme"
-        >
-          <div className="absolute inset-0 flex items-center justify-between px-2 w-full">
-            <Moon className="w-3.5 h-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
-            <Sun className="w-3.5 h-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
+        <div className="flex items-center gap-4">
+          {/* User Profile area */}
+          <div className="hidden sm:flex items-center gap-3 pr-4 border-r border-border">
+             <div className="w-8 h-8 bg-muted border border-border flex items-center justify-center">
+                <User className="w-4 h-4 text-muted-foreground" />
+             </div>
+             <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-widest">{user.username}</span>
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">{user.email}</span>
+             </div>
           </div>
-          <motion.div
-            className="absolute top-1 bottom-1 w-6 bg-foreground flex items-center justify-center z-10 shadow-sm"
-            animate={{ left: theme === "dark" ? "4px" : "36px" }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          
+          <button
+            onClick={() => setUser(null)}
+            className="p-2 border border-border hover:bg-foreground hover:text-background transition-colors rounded-none outline-none group"
+            title="Disconnect"
           >
-            {theme === "dark" ? <Moon className="w-3 h-3 text-background" /> : <Sun className="w-3 h-3 text-background" />}
-          </motion.div>
-        </button>
+             <LogOut className="w-4 h-4 text-muted-foreground group-hover:text-background transition-colors" />
+          </button>
+
+          {/* Modern Theme Toggle */}
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="relative flex items-center w-16 h-8 bg-background border border-border outline-none overflow-hidden group hover:border-foreground transition-colors"
+            aria-label="Toggle theme"
+          >
+            <div className="absolute inset-0 flex items-center justify-between px-2 w-full">
+              <Moon className="w-3.5 h-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
+              <Sun className="w-3.5 h-3.5 text-muted-foreground transition-colors group-hover:text-foreground" />
+            </div>
+            <motion.div
+              className="absolute top-0.5 bottom-0.5 w-[26px] bg-foreground flex items-center justify-center z-10 shadow-sm"
+              animate={{ left: theme === "dark" ? "2px" : "34px" }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
+              {theme === "dark" ? <Moon className="w-3 h-3 text-background" /> : <Sun className="w-3 h-3 text-background" />}
+            </motion.div>
+          </button>
+        </div>
       </header>
 
       {/* Workflow Visualizer */}
@@ -640,6 +704,9 @@ export default function App() {
           </div>
         </DialogContent>
       </Dialog>
+        </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 }

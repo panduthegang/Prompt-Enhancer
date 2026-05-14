@@ -82,9 +82,23 @@
   * {
     @apply border-border;
   }
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground font-mono;
   }
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 .bg-grid-pattern {
