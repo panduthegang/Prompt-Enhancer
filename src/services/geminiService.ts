@@ -47,13 +47,13 @@ export async function enhancePrompt(intentData: IntentDetectionResult): Promise<
   try {
     const promptInstructions = {
       action: "Create a highly optimized, professional, and token-efficient prompt for an AI model based on the provided intent and cleaned input.",
-      format: "Return a JSON object. For the `optimizedPrompt` string, YOU MUST USE PROPER MULTILINE MARKDOWN WITH ACTUAL NEWLINES (\\n). Structure the prompt strictly based on sections relevant to the category. For example, a UI/UX prompt might have: 'Style:', 'Layout:', 'Hero Section:', 'Sections to include:', 'Design Direction:', 'Visual Elements:', 'UX Requirements:', 'Output:'. An Image Generation prompt might use: 'Subject:', 'Environment:', 'Lighting:', 'Camera/Lens:', 'Style/Medium:', 'Parameters:'. ALWAYS use clear headings, bullet points, and parameters. DO NOT output as a single paragraph.",
+      format: "Return a JSON object. The `optimizedPrompt` must be a high-quality Markdown string. Use a highly structured layout with explicit sections (e.g., '### Subject', '### Environment', etc.), bulleted lists, and bold text for emphasis. Ensure it looks professional and is ready for immediate use in AI models. Use real newlines to separate sections and paragraphs.",
       guidelines: [
-        "Use actual newline characters (\\n) in the string to ensure the Markdown is correctly formatted spanning multiple lines.",
-        "Ensure the output uses proper Markdown formatting without errant asterisks. Use **bold** strictly for emphasis.",
-        "Use a highly structured layout with explicit sections, lists, and key-value pairs (like the example templates).",
-        "Be concise and high-signal, eliminate all filler words.",
-        "Ensure compatibility with state-of-the-art AI systems like ChatGPT, Gemini, Claude, Midjourney, etc., adapting styling based on the category."
+        "Structure the output with clear headings and logical groupings based on the category.",
+        "Ensure the Markdown is correctly formatted so it renders across multiple lines naturally.",
+        "Use bolding (**text**) for section headers and key parameters.",
+        "Maintain a professional, clean, and high-signal tone.",
+        "Avoid any meta-commentary; only output the prompt itself within the `optimizedPrompt` field."
       ]
     };
 
@@ -87,7 +87,17 @@ export async function enhancePrompt(intentData: IntentDetectionResult): Promise<
     });
 
     if (!response.text) return null;
-    return JSON.parse(response.text) as EnhancementResult;
+    const responseData = JSON.parse(response.text) as EnhancementResult;
+    
+    // Post-processing: Ensure literal '\n' strings are converted to real newlines
+    // and cleanup potential double-escaped characters
+    if (responseData.optimizedPrompt) {
+      responseData.optimizedPrompt = responseData.optimizedPrompt
+        .replace(/\\n/g, '\n')
+        .replace(/\\"/g, '"');
+    }
+    
+    return responseData;
   } catch (error) {
     console.error("Error enhancing prompt:", error);
     return null;

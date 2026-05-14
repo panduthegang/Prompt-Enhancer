@@ -1,0 +1,189 @@
+import { useState } from "react";
+import { Search, Filter, ChevronDown, ArrowRight, Info, Copy, Check } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import ReactMarkdown from "react-markdown";
+import { PromptHistory, PromptCategory } from "../types";
+import { cn } from "../lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/Dialog";
+
+const CATEGORIES: (PromptCategory | "All")[] = [
+  "All", "image generation", "video generation", "coding/web app", "marketing", "content writing", "UI/UX", "business", "research", "other"
+];
+
+interface HistoryLogsProps {
+  history: PromptHistory[];
+  appState: string;
+  onCopy: (text: string) => void;
+  copiedPrompt: string | null;
+}
+
+export default function HistoryLogs({ history, appState, onCopy, copiedPrompt }: HistoryLogsProps) {
+  const [selectedHistory, setSelectedHistory] = useState<PromptHistory | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState<PromptCategory | "All">("All");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const filteredHistory = history.filter(item => {
+    const matchesSearch = item.original.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.optimized.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === "All" || item.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  return (
+    <>
+      <AnimatePresence>
+        {(appState === "idle" || appState === "result") && history.length > 0 && (
+          <motion.footer 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="w-full border-t border-border bg-background/50 backdrop-blur-md mt-auto relative z-20"
+          >
+            <div className="max-w-7xl mx-auto p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                 <div className="flex items-center gap-3">
+                   <h2 className="text-xs uppercase tracking-widest font-bold text-muted-foreground whitespace-nowrap">Historical Logs</h2>
+                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{filteredHistory.length} records</span>
+                 </div>
+                 
+                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-64 flex items-center group">
+                      <Search className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                      <input 
+                        type="text" 
+                        placeholder="Search prompts..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="bg-transparent border border-border py-2 pl-9 pr-3 text-xs uppercase tracking-widest outline-none focus:border-foreground transition-colors w-full"
+                      />
+                    </div>
+                    <div className="relative w-full sm:w-56 flex items-center group">
+                      <Filter className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none z-10" />
+                      
+                      <button 
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        className="bg-transparent border border-border py-2 pl-9 pr-8 text-xs uppercase tracking-widest outline-none hover:border-foreground focus:border-foreground transition-colors w-full text-left relative"
+                      >
+                        {filterCategory}
+                        <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      </button>
+
+                      <AnimatePresence>
+                        {isFilterOpen && (
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setIsFilterOpen(false)} />
+                            <motion.div 
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              className="absolute bottom-full left-0 right-0 mb-1 bg-background border border-border shadow-2xl z-30 max-h-60 overflow-y-auto scrollbar-hide"
+                            >
+                              {CATEGORIES.map(c => (
+                                <button 
+                                  key={c} 
+                                  onClick={() => {
+                                    setFilterCategory(c);
+                                    setIsFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-4 py-2 text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors",
+                                    filterCategory === c ? "bg-muted text-foreground" : "text-muted-foreground"
+                                  )}
+                                >
+                                  {c}
+                                </button>
+                              ))}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                 </div>
+              </div>
+              
+              {filteredHistory.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground uppercase tracking-widest border border-dashed border-border">
+                  No records match your filters.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {filteredHistory.slice(0, 8).map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelectedHistory(item)}
+                      className="text-left border border-border p-4 bg-background hover:border-foreground transition-colors group relative overflow-hidden h-32 flex flex-col justify-between"
+                    >
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-foreground/5 to-transparent translate-x-[-100%] group-hover:translate-x-[0%] transition-transform duration-500 ease-out" />
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{item.category}</span>
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-foreground"><ArrowRight className="w-3 h-3" /></span>
+                      </div>
+                      <p className="text-xs line-clamp-2 text-muted-foreground group-hover:text-foreground transition-colors mb-2 flex-grow">"{item.original}"</p>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-auto">{new Date(item.timestamp).toLocaleDateString()}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
+
+      <Dialog open={!!selectedHistory} onOpenChange={() => setSelectedHistory(null)}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[1200px] w-full border-border bg-background rounded-none shadow-2xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="p-6 border-b border-border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                <Info className="w-4 h-4" /> Record Details
+              </DialogTitle>
+              {selectedHistory && (
+                 <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest">
+                   {selectedHistory.category}
+                 </span>
+              )}
+            </div>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+            {selectedHistory && (
+              <>
+                <div className="space-y-2">
+                  <h4 className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Raw Input</h4>
+                  <div className="p-4 border border-border bg-muted/30 text-sm italic relative">
+                    <span className="absolute left-0 top-0 bottom-0 w-1 bg-muted-foreground/30" />
+                    "{selectedHistory.original}"
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex justify-between items-center">
+                    <span>Generated Artifact</span>
+                    <button 
+                      onClick={() => onCopy(selectedHistory.optimized)}
+                      className="flex items-center gap-1.5 hover:text-foreground transition-colors text-muted-foreground w-24 justify-end"
+                    >
+                      {copiedPrompt === selectedHistory.optimized ? (
+                         <><Check className="w-3 h-3" /> COPIED</>
+                      ) : (
+                         <><Copy className="w-3 h-3" /> COPY</>
+                      )}
+                    </button>
+                  </h4>
+                  <div className="markdown-body">
+                    <ReactMarkdown>{selectedHistory.optimized}</ReactMarkdown>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

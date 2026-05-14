@@ -24,7 +24,7 @@ export default function AuthVisuals() {
               visible: { opacity: 1, x: 0, filter: 'blur(0px)' }
             }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="p-5 border border-border/50 bg-background/50 backdrop-blur-sm self-start w-4/5 mr-auto relative shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.05)]"
+            className="p-5 border border-border/50 bg-background/50 backdrop-blur-sm self-start w-4/5 mr-auto relative shadow-[4px_4px_0_0_rgba(0,0,0,0.1)]"
           >
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
               <CornerDownRight className="w-3 h-3" /> Raw Stream
@@ -93,7 +93,7 @@ export default function AuthVisuals() {
               visible: { opacity: 1, x: 0, filter: 'blur(0px)' }
             }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="p-6 border border-border bg-background backdrop-blur-md self-end w-[90%] ml-auto relative shadow-[8px_8px_0_0_rgba(0,0,0,0.1)] dark:shadow-[8px_8px_0_0_rgba(255,255,255,0.05)] border-l-4 border-l-foreground overflow-hidden group"
+            className="p-6 border border-border bg-background backdrop-blur-md self-end w-[90%] ml-auto relative shadow-[8px_8px_0_0_rgba(0,0,0,0.1)] border-l-4 border-l-foreground overflow-hidden group"
           >
             <motion.div className="absolute inset-0 bg-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="text-[10px] uppercase tracking-widest text-foreground font-bold mb-4 flex items-center justify-between relative z-10">
@@ -106,7 +106,7 @@ export default function AuthVisuals() {
               <strong>Role:</strong> Expert Full-Stack Developer.<br/>
               <strong>Task:</strong> Develop a high-performance gym management landing page.<br/>
               <strong>Tech Stack:</strong> Next.js, React, Tailwind CSS.<br/>
-              <strong>Key Features:</strong> Smooth performance, modern dark UI...
+              <strong>Key Features:</strong> Smooth performance, modern clean UI...
             </p>
           </motion.div>
         </motion.div>

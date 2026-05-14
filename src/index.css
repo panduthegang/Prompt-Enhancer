@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -58,25 +56,6 @@
   --ring: oklch(0.708 0 0);
 }
 
-.dark {
-  --background: oklch(0.05 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.05 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.05 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.15 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.15 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.15 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --border: oklch(0.15 0 0);
-  --input: oklch(0.15 0 0);
-  --ring: oklch(0.3 0 0);
-}
 
 @layer base {
   * {
@@ -107,10 +86,6 @@
                     linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 1px, transparent 1px);
 }
 
-.dark .bg-grid-pattern {
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-}
 
 .markdown-body {
   @apply text-sm leading-relaxed space-y-4 font-mono w-full break-words;
