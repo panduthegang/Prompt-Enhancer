@@ -77,7 +77,7 @@ export async function enhancePrompt(intentData: IntentDetectionResult): Promise<
     };
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: `Intent: ${intentData.intent}\nCategory: ${intentData.category}\nCleaned Input: ${intentData.cleanedInput}\n\nInstructions: ${JSON.stringify(promptInstructions)}\n\nGenerate the optimized prompt.`,
       config: {
         responseMimeType: "application/json",

@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import { detectIntent, enhancePrompt } from "./services/geminiService";
 import { IntentDetectionResult, EnhancementResult, PromptHistory, PromptCategory } from "./types";
 import { cn } from "./lib/utils";
+import AuthPage from "./AuthPage";
 
 import {
   Dialog,
@@ -38,16 +39,17 @@ const EXAMPLES: { category: PromptCategory, text: string }[] = [
 ];
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [appState, setAppState] = useState<AppState>("idle");
   const [currentIntent, setCurrentIntent] = useState<IntentDetectionResult | null>(null);
   const [currentResult, setCurrentResult] = useState<EnhancementResult | null>(null);
-
+  
   const [history, setHistory] = useState<PromptHistory[]>([]);
   const [selectedHistory, setSelectedHistory] = useState<PromptHistory | null>(null);
-
+  
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<PromptCategory | "All">("All");
@@ -118,7 +120,7 @@ export default function App() {
   const handleProcess = async () => {
     if (!input.trim() || appState !== "idle") return;
     setAppState("detecting");
-
+    
     const intent = await detectIntent(input);
     if (intent) {
       setCurrentIntent(intent);
@@ -140,7 +142,7 @@ export default function App() {
       if (result) {
         setCurrentResult(result);
         setAppState("result");
-
+        
         const newHistoryItem: PromptHistory = {
           id: Date.now().toString(),
           timestamp: Date.now(),
@@ -171,13 +173,17 @@ export default function App() {
       setCopiedPrompt(null);
     }, 2000);
   };
-
+  
   const filteredHistory = history.filter(item => {
-    const matchesSearch = item.original.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.optimized.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = item.original.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.optimized.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === "All" || item.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
+
+  if (!isAuthenticated) {
+    return <AuthPage onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="relative min-h-screen font-mono text-foreground overflow-x-hidden selection:bg-foreground selection:text-background flex flex-col">
@@ -189,12 +195,12 @@ export default function App() {
       {/* Header */}
       <header className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50">
         <div className="flex flex-col">
-          <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
-            <Sparkles className="w-5 h-5 fill-current" /> P.E.E
-          </h1>
-          <span className="text-[10px] tracking-widest text-muted-foreground uppercase">Prompt Enhancement Engine</span>
+           <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
+             <Sparkles className="w-5 h-5 fill-current" /> P.E.E
+           </h1>
+           <span className="text-[10px] tracking-widest text-muted-foreground uppercase">Prompt Enhancement Engine</span>
         </div>
-
+        
         {/* Modern Theme Toggle */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -219,33 +225,33 @@ export default function App() {
       <div className="w-full max-w-6xl mx-auto px-4 pt-28 pb-8 z-10 flex flex-col items-center overflow-x-auto">
         <div className="flex w-full min-w-[800px] items-start justify-between relative">
           <div className="absolute top-4 left-0 right-0 h-px bg-border -z-20" />
-          <motion.div
-            className="absolute top-4 left-0 h-px bg-foreground -z-10"
+          <motion.div 
+            className="absolute top-4 left-0 h-px bg-foreground -z-10" 
             initial={{ width: "0%" }}
-            animate={{
+            animate={{ 
               width: `${(
-                WORKFLOW_STEPS.findIndex(s =>
+                WORKFLOW_STEPS.findIndex(s => 
                   (appState === "idle" && s.id === "input") ||
                   (appState === "detecting" && s.id === "intent") ||
                   (appState === "confirming" && s.id === "confirmation") ||
                   (appState === "enhancing" && s.id === "enhancement") ||
                   (appState === "result" && s.id === "final")
                 ) / (WORKFLOW_STEPS.length - 1)
-              ) * 100}%`
+              ) * 100}%` 
             }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           />
           {WORKFLOW_STEPS.map((step, idx) => {
             const isActive = step.states.includes(appState);
             const isCurrent = (appState === "idle" && step.id === "input") ||
-              (appState === "detecting" && (step.id === "cleaning" || step.id === "intent")) ||
-              (appState === "confirming" && step.id === "confirmation") ||
-              (appState === "enhancing" && (step.id === "enhancement" || step.id === "validation")) ||
-              (appState === "result" && step.id === "final");
-
+                              (appState === "detecting" && (step.id === "cleaning" || step.id === "intent")) ||
+                              (appState === "confirming" && step.id === "confirmation") ||
+                              (appState === "enhancing" && (step.id === "enhancement" || step.id === "validation")) ||
+                              (appState === "result" && step.id === "final");
+            
             return (
               <div key={step.id} className="flex flex-col items-center gap-3 relative bg-background px-2">
-                <motion.div
+                <motion.div 
                   className={cn(
                     "w-8 h-8 flex items-center justify-center border",
                     isActive ? "border-foreground bg-foreground text-background" : "border-border bg-background text-muted-foreground",
@@ -256,7 +262,7 @@ export default function App() {
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  {isActive && !isCurrent ? <Check className="w-4 h-4" /> : <span className="text-xs font-bold">{idx + 1}</span>}
+                   {isActive && !isCurrent ? <Check className="w-4 h-4" /> : <span className="text-xs font-bold">{idx + 1}</span>}
                 </motion.div>
                 <span className={cn(
                   "text-[10px] uppercase tracking-widest text-center w-24 leading-tight font-bold",
@@ -272,7 +278,7 @@ export default function App() {
 
       {/* Main Action Area */}
       <main className="flex-1 flex flex-col items-center pt-8 pb-24 px-4 w-full max-w-4xl mx-auto z-10">
-
+        
         <AnimatePresence mode="wait">
           {appState === "idle" && (
             <motion.div
@@ -295,7 +301,7 @@ export default function App() {
                   placeholder="Type or speak the raw fragments of your idea..."
                   className="w-full min-h-[160px] resize-none bg-transparent outline-none p-4 placeholder:text-muted-foreground/50"
                 />
-
+                
                 <div className="flex justify-between items-center p-2 border-t border-border/50">
                   <button
                     onClick={toggleRecording}
@@ -307,7 +313,7 @@ export default function App() {
                     <Mic className="w-4 h-4" />
                     {isRecording ? "Recording..." : "Voice Input"}
                   </button>
-
+                  
                   <button
                     onClick={handleProcess}
                     disabled={!input.trim()}
@@ -374,14 +380,14 @@ export default function App() {
               </div>
               <div className="mb-6 mt-4">
                 <p className="text-sm text-muted-foreground uppercase tracking-widest mb-2 font-bold flex gap-2">
-                  Category <span className="text-foreground">{currentIntent.category}</span>
+                   Category <span className="text-foreground">{currentIntent.category}</span>
                 </p>
                 <div className="p-4 bg-muted/30 border border-border/50 italic mb-4 text-sm">
                   "{currentIntent.cleanedInput}"
                 </div>
                 <h3 className="text-lg font-bold">I assume you want to {currentIntent.intent}?</h3>
               </div>
-
+              
               <div className="flex gap-4">
                 <button
                   onClick={() => handleConfirm(true)}
@@ -406,33 +412,33 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="w-full max-w-4xl"
             >
-              <div className="bg-background border border-border shadow-2xl relative">
-                <div className="flex items-center justify-between border-b border-border bg-muted/20 p-4">
-                  <div className="w-32 h-4 bg-muted animate-pulse" />
-                  <div className="flex items-center gap-3">
-                    <div className="w-24 h-4 bg-muted animate-pulse" />
-                    <div className="w-16 h-8 bg-muted animate-pulse" />
-                  </div>
-                </div>
-
-                <div className="p-8 space-y-6">
-                  <div className="w-1/3 h-6 bg-muted animate-pulse" />
-                  <div className="space-y-3">
-                    <div className="w-full h-4 bg-muted animate-pulse" />
-                    <div className="w-5/6 h-4 bg-muted animate-pulse" />
-                    <div className="w-4/6 h-4 bg-muted animate-pulse" />
-                  </div>
-                  <div className="w-1/4 h-6 bg-muted animate-pulse mt-8" />
-                  <div className="space-y-3">
-                    <div className="w-full h-4 bg-muted animate-pulse" />
-                    <div className="w-full h-4 bg-muted animate-pulse" />
-                  </div>
-                </div>
-
-                <div className="p-4 border-t border-border flex justify-end bg-muted/10">
-                  <div className="w-32 h-8 bg-muted animate-pulse" />
-                </div>
-              </div>
+               <div className="bg-background border border-border shadow-2xl relative">
+                 <div className="flex items-center justify-between border-b border-border bg-muted/20 p-4">
+                    <div className="w-32 h-4 bg-muted animate-pulse" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-24 h-4 bg-muted animate-pulse" />
+                      <div className="w-16 h-8 bg-muted animate-pulse" />
+                    </div>
+                 </div>
+                 
+                 <div className="p-8 space-y-6">
+                   <div className="w-1/3 h-6 bg-muted animate-pulse" />
+                   <div className="space-y-3">
+                     <div className="w-full h-4 bg-muted animate-pulse" />
+                     <div className="w-5/6 h-4 bg-muted animate-pulse" />
+                     <div className="w-4/6 h-4 bg-muted animate-pulse" />
+                   </div>
+                   <div className="w-1/4 h-6 bg-muted animate-pulse mt-8" />
+                   <div className="space-y-3">
+                     <div className="w-full h-4 bg-muted animate-pulse" />
+                     <div className="w-full h-4 bg-muted animate-pulse" />
+                   </div>
+                 </div>
+                 
+                 <div className="p-4 border-t border-border flex justify-end bg-muted/10">
+                   <div className="w-32 h-8 bg-muted animate-pulse" />
+                 </div>
+               </div>
             </motion.div>
           )}
 
@@ -443,43 +449,43 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="w-full max-w-4xl"
             >
-              <div className="bg-background border border-border shadow-2xl relative">
-                <div className="flex items-center justify-between border-b border-border bg-muted/20 p-4">
-                  <span className="text-xs font-bold uppercase tracking-widest">Optimized Output</span>
-                  <div className="flex items-center gap-3">
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      Tokens: <span className="text-foreground line-through opacity-50">{currentResult.originalTokens}</span>
-                      <ArrowRight className="w-3 h-3" />
-                      <span className="font-bold text-primary px-1 bg-primary/10 border border-primary/20">{currentResult.optimizedTokens}</span>
+               <div className="bg-background border border-border shadow-2xl relative">
+                 <div className="flex items-center justify-between border-b border-border bg-muted/20 p-4">
+                    <span className="text-xs font-bold uppercase tracking-widest">Optimized Output</span>
+                    <div className="flex items-center gap-3">
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        Tokens: <span className="text-foreground line-through opacity-50">{currentResult.originalTokens}</span> 
+                        <ArrowRight className="w-3 h-3" /> 
+                        <span className="font-bold text-primary px-1 bg-primary/10 border border-primary/20">{currentResult.optimizedTokens}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleCopy(currentResult.optimizedPrompt)}
+                        className="min-w-[80px] px-3 py-1.5 border border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-all flex justify-center items-center gap-2 text-xs uppercase"
+                      >
+                         {copiedPrompt === currentResult.optimizedPrompt ? (
+                            <><Check className="w-3 h-3" /> Copied</>
+                         ) : (
+                            <><Copy className="w-3 h-3" /> Copy</>
+                         )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleCopy(currentResult.optimizedPrompt)}
-                      className="min-w-[80px] px-3 py-1.5 border border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-all flex justify-center items-center gap-2 text-xs uppercase"
-                    >
-                      {copiedPrompt === currentResult.optimizedPrompt ? (
-                        <><Check className="w-3 h-3" /> Copied</>
-                      ) : (
-                        <><Copy className="w-3 h-3" /> Copy</>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-8">
-                  <div className="markdown-body">
-                    <ReactMarkdown>{currentResult.optimizedPrompt}</ReactMarkdown>
-                  </div>
-                </div>
-
-                <div className="p-4 border-t border-border flex justify-end bg-muted/10">
-                  <button
-                    onClick={reset}
-                    className="px-6 py-2 border border-border hover:bg-muted text-xs uppercase tracking-widest font-bold transition-colors"
-                  >
-                    Process Another
-                  </button>
-                </div>
-              </div>
+                 </div>
+                 
+                 <div className="p-8">
+                   <div className="markdown-body">
+                      <ReactMarkdown>{currentResult.optimizedPrompt}</ReactMarkdown>
+                   </div>
+                 </div>
+                 
+                 <div className="p-4 border-t border-border flex justify-end bg-muted/10">
+                   <button
+                     onClick={reset}
+                     className="px-6 py-2 border border-border hover:bg-muted text-xs uppercase tracking-widest font-bold transition-colors"
+                   >
+                     Process Another
+                   </button>
+                 </div>
+               </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -488,7 +494,7 @@ export default function App() {
       {/* History Grid (only show when idle or result) */}
       <AnimatePresence>
         {(appState === "idle" || appState === "result") && history.length > 0 && (
-          <motion.footer
+          <motion.footer 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -496,66 +502,66 @@ export default function App() {
           >
             <div className="max-w-7xl mx-auto p-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xs uppercase tracking-widest font-bold text-muted-foreground whitespace-nowrap">Historical Logs</h2>
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{filteredHistory.length} records</span>
-                </div>
+                 <div className="flex items-center gap-3">
+                   <h2 className="text-xs uppercase tracking-widest font-bold text-muted-foreground whitespace-nowrap">Historical Logs</h2>
+                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">{filteredHistory.length} records</span>
+                 </div>
+                 
+                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-64 flex items-center group">
+                      <Search className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                      <input 
+                        type="text" 
+                        placeholder="Search prompts..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="bg-transparent border border-border py-2 pl-9 pr-3 text-xs uppercase tracking-widest outline-none focus:border-foreground transition-colors w-full"
+                      />
+                    </div>
+                    <div className="relative w-full sm:w-56 flex items-center group">
+                      <Filter className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none z-10" />
+                      
+                      <button 
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        className="bg-transparent border border-border py-2 pl-9 pr-8 text-xs uppercase tracking-widest outline-none hover:border-foreground focus:border-foreground transition-colors w-full text-left relative"
+                      >
+                        {filterCategory}
+                        <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      </button>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                  <div className="relative w-full sm:w-64 flex items-center group">
-                    <Search className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors" />
-                    <input
-                      type="text"
-                      placeholder="Search prompts..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-transparent border border-border py-2 pl-9 pr-3 text-xs uppercase tracking-widest outline-none focus:border-foreground transition-colors w-full"
-                    />
-                  </div>
-                  <div className="relative w-full sm:w-56 flex items-center group">
-                    <Filter className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none z-10" />
-
-                    <button
-                      onClick={() => setIsFilterOpen(!isFilterOpen)}
-                      className="bg-transparent border border-border py-2 pl-9 pr-8 text-xs uppercase tracking-widest outline-none hover:border-foreground focus:border-foreground transition-colors w-full text-left relative"
-                    >
-                      {filterCategory}
-                      <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                    </button>
-
-                    <AnimatePresence>
-                      {isFilterOpen && (
-                        <>
-                          <div className="fixed inset-0 z-20" onClick={() => setIsFilterOpen(false)} />
-                          <motion.div
-                            initial={{ opacity: 0, y: -5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -5 }}
-                            className="absolute top-full left-0 right-0 mt-1 bg-background border border-border shadow-2xl z-30 max-h-60 overflow-y-auto"
-                          >
-                            {CATEGORIES.map(c => (
-                              <button
-                                key={c}
-                                onClick={() => {
-                                  setFilterCategory(c);
-                                  setIsFilterOpen(false);
-                                }}
-                                className={cn(
-                                  "w-full text-left px-4 py-2 text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors",
-                                  filterCategory === c ? "bg-muted text-foreground" : "text-muted-foreground"
-                                )}
-                              >
-                                {c}
-                              </button>
-                            ))}
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
+                      <AnimatePresence>
+                        {isFilterOpen && (
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setIsFilterOpen(false)} />
+                            <motion.div 
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="absolute top-full left-0 right-0 mt-1 bg-background border border-border shadow-2xl z-30 max-h-60 overflow-y-auto"
+                            >
+                              {CATEGORIES.map(c => (
+                                <button 
+                                  key={c} 
+                                  onClick={() => {
+                                    setFilterCategory(c);
+                                    setIsFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-4 py-2 text-xs uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors",
+                                    filterCategory === c ? "bg-muted text-foreground" : "text-muted-foreground"
+                                  )}
+                                >
+                                  {c}
+                                </button>
+                              ))}
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                 </div>
               </div>
-
+              
               {filteredHistory.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground uppercase tracking-widest border border-dashed border-border">
                   No records match your filters.
@@ -593,13 +599,13 @@ export default function App() {
                 <Info className="w-4 h-4" /> Record Details
               </DialogTitle>
               {selectedHistory && (
-                <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest">
-                  {selectedHistory.category}
-                </span>
+                 <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest">
+                   {selectedHistory.category}
+                 </span>
               )}
             </div>
           </DialogHeader>
-
+          
           <div className="flex-1 overflow-y-auto p-6 space-y-8">
             {selectedHistory && (
               <>
@@ -614,14 +620,14 @@ export default function App() {
                 <div className="space-y-4">
                   <h4 className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex justify-between items-center">
                     <span>Generated Artifact</span>
-                    <button
+                    <button 
                       onClick={() => handleCopy(selectedHistory.optimized)}
                       className="flex items-center gap-1.5 hover:text-foreground transition-colors text-muted-foreground w-24 justify-end"
                     >
                       {copiedPrompt === selectedHistory.optimized ? (
-                        <><Check className="w-3 h-3" /> COPIED</>
+                         <><Check className="w-3 h-3" /> COPIED</>
                       ) : (
-                        <><Copy className="w-3 h-3" /> COPY</>
+                         <><Copy className="w-3 h-3" /> COPY</>
                       )}
                     </button>
                   </h4>
