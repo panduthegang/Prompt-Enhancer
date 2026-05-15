@@ -1,67 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Workspace from "./pages/Workspace";
+import LandingPage from "./pages/LandingPage";
 
-export default function App() {
-  const [user, setUser] = useState<{ username: string, email: string } | null>(null);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+// Wrapper to handle animations between routes
+function AnimatedRoutes() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<{ username: string, email: string } | null>(() => {
+    const saved = localStorage.getItem("auth_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const handleLogin = (userData: { username: string, email: string }) => {
+    setUser(userData);
+    localStorage.setItem("auth_user", JSON.stringify(userData));
+    navigate("/workspace");
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("auth_user");
+    navigate("/");
+  };
 
   return (
-    <div className="relative min-h-screen font-mono text-foreground overflow-x-hidden selection:bg-foreground selection:text-background flex flex-col">
-      {/* Background with Fade */}
-      <div className="fixed inset-0 z-[-2] bg-background" />
-      <div className="fixed inset-0 z-[-1] bg-grid-pattern" />
-      <div className="fixed inset-0 z-[-1] bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <LandingPage onGetStarted={() => navigate("/signin")} />
+          </motion.div>
+        } />
+        
+        <Route path="/signin" element={
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+            <SignIn onLogin={handleLogin} onSwitchToSignUp={() => navigate("/signup")} />
+          </motion.div>
+        } />
+        
+        <Route path="/signup" element={
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <SignUp onLogin={handleLogin} onSwitchToSignIn={() => navigate("/signin")} />
+          </motion.div>
+        } />
+        
+        <Route path="/workspace" element={
+          user ? (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col w-full h-full min-h-screen">
+              <Workspace user={user} onLogout={handleLogout} />
+            </motion.div>
+          ) : (
+            <Navigate to="/signin" replace />
+          )
+        } />
 
-      <AnimatePresence mode="wait">
-        {!user ? (
-          <motion.div
-            key="auth"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="w-full"
-          >
-            <AnimatePresence mode="wait">
-              {authMode === "signin" ? (
-                <motion.div
-                  key="signin"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full"
-                >
-                  <SignIn onLogin={(u) => setUser(u)} onSwitchToSignUp={() => setAuthMode("signup")} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="signup"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full"
-                >
-                  <SignUp onLogin={(u) => setUser(u)} onSwitchToSignIn={() => setAuthMode("signin")} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="app-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col w-full"
-          >
-            <Workspace user={user} onLogout={() => setUser(null)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="relative min-h-screen font-mono text-foreground overflow-x-hidden selection:bg-foreground selection:text-background flex flex-col">
+        {/* Background with Fade */}
+        <div className="fixed inset-0 z-[-2] bg-background" />
+        <div className="fixed inset-0 z-[-1] bg-grid-pattern" />
+        <div className="fixed inset-0 z-[-1] bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+
+        <AnimatedRoutes />
+      </div>
+    </BrowserRouter>
   );
 }

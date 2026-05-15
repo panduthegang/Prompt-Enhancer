@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { Sparkles, ArrowRight } from "lucide-react";
 import AuthVisuals from "../components/AuthVisuals";
 
@@ -18,6 +19,7 @@ interface SignUpProps {
 }
 
 export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -31,7 +33,14 @@ export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
     <div className="flex w-full h-screen font-mono bg-background text-foreground selection:bg-foreground selection:text-background overflow-hidden">
       {/* Left Column - Auth Form */}
       <div className="w-full lg:w-1/2 flex flex-col px-8 py-6 md:px-16 md:py-8 xl:px-24 xl:py-10 justify-center relative z-10 border-r border-border bg-background h-full overflow-hidden">
-        <div className="absolute top-6 left-8 md:top-8 md:left-12 flex flex-col">
+        <button 
+          onClick={() => navigate("/")}
+          className="absolute top-8 left-8 md:top-10 md:left-12 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 z-20"
+        >
+          ← Back to Landing
+        </button>
+
+        <div className="absolute top-16 left-8 md:top-20 md:left-12 flex flex-col">
            <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
              <Sparkles className="w-5 h-5 fill-current" /> P.E.E
            </h1>
