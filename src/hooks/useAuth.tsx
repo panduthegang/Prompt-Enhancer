@@ -6,6 +6,8 @@ import {
   signInWithPopup,
   signOut,
   updateProfile,
+  setPersistence,
+  browserSessionPersistence,
   User as FirebaseUser,
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";

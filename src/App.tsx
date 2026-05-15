@@ -54,7 +54,10 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <LandingPage onGetStarted={() => navigate("/signup")} />
+            <LandingPage onGetStarted={async () => {
+              await logout();
+              navigate("/signup");
+            }} />
           </motion.div>
         } />
         
