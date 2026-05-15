@@ -13,6 +13,11 @@ export interface IntentDetectionResult {
   intent: string;
   category: PromptCategory;
   cleanedInput: string;
+  task: string;
+  domain: string;
+  constraints: string[];
+  outputFormat: string;
+  audience: string;
 }
 
 export interface EnhancementResult {

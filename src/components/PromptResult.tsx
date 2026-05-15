@@ -22,11 +22,7 @@ export default function PromptResult({ result, onCopy, copiedPrompt, onReset }: 
          <div className="flex items-center justify-between border-b border-border bg-muted/20 p-4">
             <span className="text-xs font-bold uppercase tracking-widest">Optimized Output</span>
             <div className="flex items-center gap-3">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                Tokens: <span className="text-foreground line-through opacity-50">{result.originalTokens}</span> 
-                <ArrowRight className="w-3 h-3" /> 
-                <span className="font-bold text-primary px-1 bg-primary/10 border border-primary/20">{result.optimizedTokens}</span>
-              </div>
+              
               <button 
                 onClick={() => onCopy(result.optimizedPrompt)}
                 className="min-w-[80px] px-3 py-1.5 border border-foreground bg-foreground text-background hover:bg-background hover:text-foreground transition-all flex justify-center items-center gap-2 text-xs uppercase"

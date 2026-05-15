@@ -8,7 +8,7 @@ const intentSchema = {
   properties: {
     intent: {
       type: Type.STRING,
-      description: "A short, concise summary of what the user wants to achieve (e.g., 'Generate an image of a futuristic city' or 'Write a polite email to a client')."
+      description: "A short, concise summary of what the user wants to achieve."
     },
     category: {
       type: Type.STRING,
@@ -17,17 +17,42 @@ const intentSchema = {
     },
     cleanedInput: {
       type: Type.STRING,
-      description: "The user's original input grammatically corrected, translated to English if necessary, with filler words removed."
+      description: "The user's original input grammatically corrected and translated to English."
+    },
+    task: {
+      type: Type.STRING,
+      description: "The specific core task to be performed (e.g., 'Generate image', 'Write code', 'Create plan')."
+    },
+    domain: {
+      type: Type.STRING,
+      description: "The industry or field of expertise (e.g., 'Fitness', 'E-commerce', 'Cybersecurity')."
+    },
+    constraints: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: "A list of specific rules or limitations extracted from the input."
+    },
+    outputFormat: {
+      type: Type.STRING,
+      description: "The desired format of the AI output (e.g., 'Markdown table', 'React component', 'Bullet points')."
+    },
+    audience: {
+      type: Type.STRING,
+      description: "For content tasks, who is the content for? For creation/coding tasks, who are the intended users of the product being built (e.g. 'Productivity seekers', 'Fitness enthusiasts')."
     }
   },
-  required: ["intent", "category", "cleanedInput"]
+  required: ["intent", "category", "cleanedInput", "task", "domain", "constraints", "outputFormat", "audience"]
 };
 
 export async function detectIntent(rawInput: string): Promise<IntentDetectionResult | null> {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Analyze the following raw user input. It might be messy, multilingual, or in Hinglish. Extract the core intent, categorize it, and provide a cleaned version of the input in English.\n\nRaw Input: "${rawInput}"`,
+      contents: `Analyze the following raw user input. Extract the core intent and decompose it into the requested structure. Use professional terminology. 
+
+CRITICAL: For 'audience', do not just put 'Developers' for coding tasks. Instead, identify who would actually use the resulting product (e.g. if building a to-do list, the audience is 'General users' or 'Task managers'). 
+
+If a field is not explicitly specified, infer it logically from the context of the goal.\n\nRaw Input: "${rawInput}"`,
       config: {
         responseMimeType: "application/json",
         responseSchema: intentSchema,
@@ -46,14 +71,14 @@ export async function detectIntent(rawInput: string): Promise<IntentDetectionRes
 export async function enhancePrompt(intentData: IntentDetectionResult): Promise<EnhancementResult | null> {
   try {
     const promptInstructions = {
-      action: "Create a highly optimized, professional, and token-efficient prompt for an AI model based on the provided intent and cleaned input.",
-      format: "Return a JSON object. The `optimizedPrompt` must be a high-quality Markdown string. Use a highly structured layout with explicit sections (e.g., '### Subject', '### Environment', etc.), bulleted lists, and bold text for emphasis. Ensure it looks professional and is ready for immediate use in AI models. Use real newlines to separate sections and paragraphs.",
+      action: "Create a highly optimized, professional, and token-efficient prompt for an AI model based on the decomposed intent data.",
+      format: "Return a JSON object. The `optimizedPrompt` must be a high-quality Markdown string. Use a highly structured layout with explicit sections, bulleted lists, and bold text for emphasis. Use real newlines to separate sections.",
       guidelines: [
-        "Structure the output with clear headings and logical groupings based on the category.",
-        "Ensure the Markdown is correctly formatted so it renders across multiple lines naturally.",
-        "Use bolding (**text**) for section headers and key parameters.",
-        "Maintain a professional, clean, and high-signal tone.",
-        "Avoid any meta-commentary; only output the prompt itself within the `optimizedPrompt` field."
+        "Structure the output with clear, professional headings based on the Task, Domain, and Audience.",
+        "Ensure every Constraint is explicitly integrated into the prompt with technical depth.",
+        "Use bolding (**text**) for section headers and key parameters to improve readability.",
+        "Maximize 'Information Density': Eliminate conversational filler while retaining all necessary technical context and instructions.",
+        "The final prompt must be comprehensive and ready for immediate professional use, avoiding over-simplification."
       ]
     };
 
@@ -78,7 +103,7 @@ export async function enhancePrompt(intentData: IntentDetectionResult): Promise<
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Intent: ${intentData.intent}\nCategory: ${intentData.category}\nCleaned Input: ${intentData.cleanedInput}\n\nInstructions: ${JSON.stringify(promptInstructions)}\n\nGenerate the optimized prompt.`,
+      contents: `Decomposed Data: ${JSON.stringify(intentData)}\n\nInstructions: ${JSON.stringify(promptInstructions)}\n\nGenerate the optimized prompt.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: enhancementSchema,
@@ -88,15 +113,13 @@ export async function enhancePrompt(intentData: IntentDetectionResult): Promise<
 
     if (!response.text) return null;
     const responseData = JSON.parse(response.text) as EnhancementResult;
-    
-    // Post-processing: Ensure literal '\n' strings are converted to real newlines
-    // and cleanup potential double-escaped characters
+
     if (responseData.optimizedPrompt) {
       responseData.optimizedPrompt = responseData.optimizedPrompt
         .replace(/\\n/g, '\n')
         .replace(/\\"/g, '"');
     }
-    
+
     return responseData;
   } catch (error) {
     console.error("Error enhancing prompt:", error);

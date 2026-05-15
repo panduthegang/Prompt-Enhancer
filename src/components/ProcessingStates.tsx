@@ -60,31 +60,71 @@ export function ConfirmingState({ intent, onConfirm }: ConfirmingStateProps) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, y: -20 }}
-      className="w-full max-w-2xl bg-background border border-border p-6 shadow-2xl relative"
+      className="w-full max-w-2xl bg-background border border-border p-8 shadow-2xl relative"
     >
       <div className="absolute top-0 right-0 p-2 border-b border-l border-border bg-muted/30">
-        <span className="text-[10px] uppercase tracking-widest font-bold">Intent Detected</span>
+        <span className="text-[10px] uppercase tracking-widest font-bold">Intent Decomposed</span>
       </div>
-      <div className="mb-6 mt-4">
-        <p className="text-sm text-muted-foreground uppercase tracking-widest mb-2 font-bold flex gap-2">
-           Category <span className="text-foreground">{intent.category}</span>
-        </p>
-        <div className="p-4 bg-muted/30 border border-border/50 italic mb-4 text-sm">
-          "{intent.cleanedInput}"
+      
+      <div className="mb-8 mt-4">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="px-2 py-0.5 bg-foreground text-background text-[10px] font-bold uppercase tracking-widest">
+            {intent.category}
+          </span>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+            {intent.domain}
+          </span>
         </div>
-        <h3 className="text-lg font-bold">I assume you want to {intent.intent}?</h3>
+        
+        <h3 className="text-2xl font-bold mb-4">I will {intent.intent}</h3>
+        
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Core Task</p>
+            <p className="text-sm font-medium">{intent.task}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Target Audience</p>
+            <p className="text-sm font-medium">{intent.audience}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Output Format</p>
+            <p className="text-sm font-medium">{intent.outputFormat}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Total Constraints</p>
+            <p className="text-sm font-medium">{intent.constraints.length} identified</p>
+          </div>
+        </div>
+
+        {intent.constraints.length > 0 && (
+          <div className="mb-8 space-y-2">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Active Constraints</p>
+            <div className="flex flex-wrap gap-2">
+              {intent.constraints.map((c, i) => (
+                <span key={i} className="text-[10px] px-2 py-1 bg-muted border border-border italic text-muted-foreground">
+                  "{c}"
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="p-4 bg-muted/30 border border-border/50 text-xs italic text-muted-foreground">
+          Original Idea: "{intent.cleanedInput}"
+        </div>
       </div>
       
       <div className="flex gap-4">
         <button
           onClick={() => onConfirm(true)}
-          className="flex-1 py-3 border border-foreground bg-foreground text-background uppercase tracking-widest text-xs font-bold hover:bg-background hover:text-foreground transition-all"
+          className="flex-1 py-4 border border-foreground bg-foreground text-background uppercase tracking-widest text-xs font-bold hover:bg-background hover:text-foreground transition-all"
         >
-          Enhance It
+          Confirm & Enhance
         </button>
         <button
           onClick={() => onConfirm(false)}
-          className="flex-1 py-3 border border-border hover:bg-muted uppercase tracking-widest text-xs font-bold transition-colors"
+          className="flex-1 py-4 border border-border hover:bg-muted uppercase tracking-widest text-xs font-bold transition-colors"
         >
           Refine Input
         </button>
