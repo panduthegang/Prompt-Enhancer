@@ -65,6 +65,23 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
     setCurrentPage(1);
   }, [searchQuery, filterCategory]);
 
+  // Pagination Logic
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, "...", totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, "...", totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, "...", currentPage, "...", totalPages);
+      }
+    }
+    return pages;
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -83,7 +100,6 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                  </div>
                  
                  <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
-                    {/* Search & Filter */}
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                       <div className="relative w-full sm:w-64 flex items-center group">
                         <Search className="w-4 h-4 absolute left-3 text-muted-foreground group-focus-within:text-foreground transition-colors" />
@@ -136,38 +152,43 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                       </div>
                     </div>
 
-                    {/* Pagination - Moved to Top */}
+                    {/* Pagination - Improved with Ellipses */}
                     {totalPages > 1 && (
-                      <div className="flex items-center gap-2 border-l border-border pl-4 h-">
+                      <div className="flex items-center gap-1.5 border-l border-border pl-4 h-8">
                         <button
                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
                           className="p-1.5 border border-border hover:border-foreground transition-colors disabled:opacity-20 group"
                         >
-                          <ChevronLeft className="w-5 h-5" />
+                          <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div className="flex items-center gap-1.5">
-                          {Array.from({ length: totalPages }).map((_, i) => (
+                        
+                        <div className="flex items-center gap-1">
+                          {getPageNumbers().map((page, i) => (
                             <button
                               key={i}
-                              onClick={() => setCurrentPage(i + 1)}
+                              onClick={() => typeof page === "number" && setCurrentPage(page)}
+                              disabled={typeof page !== "number"}
                               className={cn(
-                                "w-7 h-7 text-[15px] font-bold transition-all border",
-                                currentPage === i + 1 
+                                "w-7 h-7 text-[10px] font-bold transition-all border flex items-center justify-center",
+                                currentPage === page 
                                   ? "bg-foreground text-background border-foreground" 
-                                  : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                                  : typeof page === "number"
+                                    ? "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                                    : "border-transparent text-muted-foreground cursor-default"
                               )}
                             >
-                              {i + 1}
+                              {page}
                             </button>
                           ))}
                         </div>
+
                         <button
                           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
                           className="p-1.5 border border-border hover:border-foreground transition-colors disabled:opacity-20 group"
                         >
-                          <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-4 h-4" />
                         </button>
                       </div>
                     )}
