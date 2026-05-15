@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, AlertCircle } from "lucide-react";
 import AuthVisuals from "../components/AuthVisuals";
+import { useAuth } from "../hooks/useAuth";
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -14,19 +15,60 @@ const GoogleIcon = () => (
 );
 
 interface SignUpProps {
-  onLogin: (user: { username: string, email: string }) => void;
   onSwitchToSignIn: () => void;
 }
 
-export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
+export default function SignUp({ onSwitchToSignIn }: SignUpProps) {
   const navigate = useNavigate();
+  const { signUpEmail, signInGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin({ username: username || 'SYS_ADMIN', email });
+    setError("");
+
+    if (password.length < 6) {
+      setError("Passkey must be at least 6 characters.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signUpEmail(email, password, username || email.split("@")[0].toUpperCase());
+      navigate("/workspace");
+    } catch (err: any) {
+      const code = err?.code || "";
+      if (code === "auth/email-already-in-use") {
+        setError("This email is already registered. Try signing in.");
+      } else if (code === "auth/weak-password") {
+        setError("Passkey is too weak. Use at least 6 characters.");
+      } else if (code === "auth/invalid-email") {
+        setError("Invalid email format.");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+    try {
+      await signInGoogle();
+      navigate("/workspace");
+    } catch (err: any) {
+      if (err?.code !== "auth/popup-closed-by-user") {
+        setError("Google sign-in failed. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,11 +95,22 @@ export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
           className="w-full max-w-sm mx-auto"
         >
           <div className="mb-5">
-            <h2 className="text-2xl font-bold tracking-widest uppercase mb-1">Initialize</h2>
+            <h2 className="text-2xl font-bold tracking-widest uppercase mb-1">Sign Up</h2>
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">
-              Create an identity to begin enhancement.
+              Create an account to begin enhancement.
             </p>
           </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 border border-red-500/30 bg-red-500/5 flex items-start gap-2"
+            >
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <span className="text-[10px] uppercase tracking-widest text-red-400 font-medium">{error}</span>
+            </motion.div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <motion.div
@@ -66,32 +119,34 @@ export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="space-y-1.5"
             >
-              <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">System Alias (Username)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Username</label>
               <input 
                 type="text" 
                 required
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 className="w-full bg-transparent border border-border p-2.5 text-xs outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground/30 rounded-none uppercase"
-                placeholder="SYS_ADMIN"
+                placeholder="John Doe"
+                disabled={isLoading}
               />
             </motion.div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Network ID (Email)</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Email Address</label>
               <input 
                 type="email" 
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="w-full bg-transparent border border-border p-2.5 text-xs outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground/30 rounded-none lowercase"
-                placeholder="operator@matrix.net"
+                placeholder="you@example.com"
+                disabled={isLoading}
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Passkey</label>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Password</label>
               </div>
               <input 
                 type="password" 
@@ -100,34 +155,37 @@ export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
                 onChange={e => setPassword(e.target.value)}
                 className="w-full bg-transparent border border-border p-2.5 text-xs outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground/30 rounded-none"
                 placeholder="••••••••••••"
+                disabled={isLoading}
               />
             </div>
 
             <motion.button
               type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-foreground text-background border border-foreground p-3 text-xs font-bold uppercase tracking-widest hover:bg-background hover:text-foreground transition-all mt-2 flex items-center justify-between group rounded-none"
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
+              disabled={isLoading}
+              className="w-full bg-foreground text-background border border-foreground p-3 text-xs font-bold uppercase tracking-widest hover:bg-background hover:text-foreground transition-all mt-2 flex items-center justify-between group rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Generate Identity
+              {isLoading ? "Signing Up..." : "Sign Up"}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </form>
 
           <div className="my-4 flex items-center gap-4">
             <div className="h-px bg-border flex-1" />
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">OR OVERRIDE VIA</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">OR CONTINUE WITH</span>
             <div className="h-px bg-border flex-1" />
           </div>
 
           <motion.button
             type="button"
-            onClick={() => onLogin({ username: "GUEST_USER", email: "guest@matrix.net" })}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-transparent text-foreground border border-border p-3 text-xs font-bold uppercase tracking-widest hover:border-foreground hover:bg-muted/30 transition-all flex items-center justify-center gap-3 rounded-none"
+            onClick={handleGoogleSignIn}
+            whileHover={{ scale: isLoading ? 1 : 1.02 }}
+            whileTap={{ scale: isLoading ? 1 : 0.98 }}
+            disabled={isLoading}
+            className="w-full bg-transparent text-foreground border border-border p-3 text-xs font-bold uppercase tracking-widest hover:border-foreground hover:bg-muted/30 transition-all flex items-center justify-center gap-3 rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <GoogleIcon /> Authmode: Google
+            <GoogleIcon /> Continue with Google
           </motion.button>
 
           <div className="mt-5 text-center">
@@ -136,7 +194,7 @@ export default function SignUp({ onLogin, onSwitchToSignIn }: SignUpProps) {
               onClick={onSwitchToSignIn}
               className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors underline decoration-border underline-offset-4 hover:decoration-foreground"
             >
-              Already established? Authenticate here
+              Already have an account? Sign In
             </button>
           </div>
         </motion.div>

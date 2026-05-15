@@ -1,30 +1,51 @@
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Workspace from "./pages/Workspace";
 import LandingPage from "./pages/LandingPage";
 
-// Wrapper to handle animations between routes
+// Loading screen while Firebase resolves auth state
+function AuthLoader() {
+  return (
+    <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+      <div className="text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-foreground border-t-transparent animate-spin mx-auto" />
+        <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">Authenticating</p>
+      </div>
+    </div>
+  );
+}
+
+// Protected route wrapper
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <AuthLoader />;
+  if (!user) return <Navigate to="/signup" replace />;
+
+  return <>{children}</>;
+}
+
+// Redirect away from auth pages if already logged in
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <AuthLoader />;
+  if (user) return <Navigate to="/workspace" replace />;
+
+  return <>{children}</>;
+}
+
 function AnimatedRoutes() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ username: string, email: string } | null>(() => {
-    const saved = localStorage.getItem("auth_user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const { logout } = useAuth();
 
-  const handleLogin = (userData: { username: string, email: string }) => {
-    setUser(userData);
-    localStorage.setItem("auth_user", JSON.stringify(userData));
-    navigate("/workspace");
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("auth_user");
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -33,33 +54,34 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <LandingPage onGetStarted={() => navigate("/signin")} />
+            <LandingPage onGetStarted={() => navigate("/signup")} />
           </motion.div>
         } />
         
         <Route path="/signin" element={
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <SignIn onLogin={handleLogin} onSwitchToSignUp={() => navigate("/signup")} />
-          </motion.div>
+          <GuestRoute>
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              <SignIn onSwitchToSignUp={() => navigate("/signup")} />
+            </motion.div>
+          </GuestRoute>
         } />
         
         <Route path="/signup" element={
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <SignUp onLogin={handleLogin} onSwitchToSignIn={() => navigate("/signin")} />
-          </motion.div>
+          <GuestRoute>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <SignUp onSwitchToSignIn={() => navigate("/signin")} />
+            </motion.div>
+          </GuestRoute>
         } />
         
         <Route path="/workspace" element={
-          user ? (
+          <ProtectedRoute>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col w-full h-full min-h-screen">
-              <Workspace user={user} onLogout={handleLogout} />
+              <Workspace onLogout={handleLogout} />
             </motion.div>
-          ) : (
-            <Navigate to="/signin" replace />
-          )
+          </ProtectedRoute>
         } />
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
@@ -69,14 +91,15 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="relative min-h-screen font-mono text-foreground overflow-x-hidden selection:bg-foreground selection:text-background flex flex-col">
-        {/* Background with Fade */}
-        <div className="fixed inset-0 z-[-2] bg-background" />
-        <div className="fixed inset-0 z-[-1] bg-grid-pattern" />
-        <div className="fixed inset-0 z-[-1] bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
+      <AuthProvider>
+        <div className="relative min-h-screen font-mono text-foreground overflow-x-hidden selection:bg-foreground selection:text-background flex flex-col">
+          <div className="fixed inset-0 z-[-2] bg-background" />
+          <div className="fixed inset-0 z-[-1] bg-grid-pattern" />
+          <div className="fixed inset-0 z-[-1] bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none" />
 
-        <AnimatedRoutes />
-      </div>
+          <AnimatedRoutes />
+        </div>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

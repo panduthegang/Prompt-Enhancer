@@ -1,7 +1,8 @@
 import { Sparkles, User, LogOut } from "lucide-react";
+import { AppUser } from "../hooks/useAuth";
 
 interface WorkspaceHeaderProps {
-  user: { username: string, email: string };
+  user: AppUser;
   onLogout: () => void;
 }
 
@@ -18,9 +19,19 @@ export default function WorkspaceHeader({ user, onLogout }: WorkspaceHeaderProps
       <div className="flex items-center gap-4">
         {/* User Profile area */}
         <div className="hidden sm:flex items-center gap-3 pr-4 border-r border-border">
-           <div className="w-8 h-8 bg-muted border border-border flex items-center justify-center">
-              <User className="w-4 h-4 text-muted-foreground" />
-           </div>
+           {/* Avatar: show Google pfp if available, otherwise fallback icon */}
+           {user.photoURL ? (
+             <img 
+               src={user.photoURL} 
+               alt={user.username}
+               className="w-8 h-8 object-cover border border-border"
+               referrerPolicy="no-referrer"
+             />
+           ) : (
+             <div className="w-8 h-8 bg-muted border border-border flex items-center justify-center">
+               <User className="w-4 h-4 text-muted-foreground" />
+             </div>
+           )}
            <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-widest">{user.username}</span>
               <span className="text-[9px] uppercase tracking-widest text-muted-foreground">{user.email}</span>

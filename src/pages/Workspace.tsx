@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { useAuth } from "../hooks/useAuth";
 import { detectIntent, enhancePrompt } from "../services/geminiService";
 import { PromptHistory, IntentDetectionResult, EnhancementResult } from "../types";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
@@ -15,11 +16,12 @@ import { DetectingState, ConfirmingState, EnhancingState } from "../components/P
 import PromptResult from "../components/PromptResult";
 
 interface WorkspaceProps {
-  user: { username: string, email: string };
   onLogout: () => void;
 }
 
-export default function Workspace({ user, onLogout }: WorkspaceProps) {
+export default function Workspace({ onLogout }: WorkspaceProps) {
+  const { user } = useAuth();
+
   // Action State
   const [input, setInput] = useState("");
   const [appState, setAppState] = useState<AppState>("idle");
@@ -116,6 +118,8 @@ export default function Workspace({ user, onLogout }: WorkspaceProps) {
     setCurrentResult(null);
     setAppState("idle");
   };
+
+  if (!user) return null;
 
   return (
     <>
