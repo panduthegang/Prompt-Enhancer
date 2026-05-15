@@ -212,7 +212,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                       >
                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-foreground/5 to-transparent translate-x-[-100%] group-hover:translate-x-[0%] transition-transform duration-500 ease-out" />
                         <div className="flex justify-between items-start mb-2 relative z-10">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{item.category}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70 group-hover:text-foreground transition-colors">{item.category}</span>
                           
                           <div className="flex items-center gap-2">
                              <button
@@ -222,7 +222,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                                }}
                                className={cn(
                                  "p-1 transition-all",
-                                 item.isFavorite ? "text-foreground" : "text-muted-foreground/30 hover:text-foreground"
+                                 item.isFavorite ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                                )}
                              >
                                <Star className={cn("w-3.5 h-3.5", item.isFavorite && "fill-current")} />
@@ -230,7 +230,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                              <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                           </div>
                         </div>
-                        <p className="text-xs line-clamp-2 text-muted-foreground group-hover:text-foreground transition-colors mb-2 flex-grow relative z-10">"{item.original}"</p>
+                        <p className="text-xs line-clamp-2 text-foreground group-hover:text-foreground transition-colors mb-2 flex-grow relative z-10">"{item.original}"</p>
                         <div className="text-[10px] text-muted-foreground uppercase tracking-widest mt-auto relative z-10">{new Date(item.timestamp).toLocaleDateString()}</div>
                       </button>
                     </div>

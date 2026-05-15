@@ -33,7 +33,7 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
   // Hook for speech service
-  const { isRecording, interimTranscript, toggleRecording } = useSpeechRecognition((transcript) => {
+  const { isRecording, interimTranscript, toggleRecording, stopRecording } = useSpeechRecognition((transcript) => {
     setInput((prev) => (prev + " " + transcript).trim());
   });
 
@@ -50,6 +50,10 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
 
   const handleProcess = async () => {
     if (!input.trim() || appState !== "idle") return;
+    
+    // Ensure recording stops when starting enhancement
+    if (isRecording) stopRecording();
+    
     setAppState("detecting");
     
     try {
