@@ -77,9 +77,8 @@ export default function SignIn({ onSwitchToSignUp }: SignInProps) {
 
         <div className="absolute top-16 left-8 md:top-20 md:left-12 flex flex-col">
            <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
-             <Sparkles className="w-5 h-5 fill-current" /> P.E.E
+             <Sparkles className="w-5 h-5 fill-current" /> PROMPT-ENHANCER
            </h1>
-           <span className="text-[10px] tracking-widest text-muted-foreground uppercase">Prompt Enhancement Engine</span>
         </div>
 
         <motion.div 

@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Mic, Zap, Cpu, ArrowRight, Terminal, Star } from "lucide-react";
+import { Mic, Zap, Cpu, ArrowRight, Terminal, Star, Sparkles } from "lucide-react";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -12,10 +12,8 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       <div className="fixed top-4 md:top-6 left-0 right-0 z-50 px-4 md:px-6">
         <nav className="max-w-5xl mx-auto border border-white/10 bg-black/60 backdrop-blur-xl px-4 md:px-6 h-12 md:h-14 flex items-center justify-between shadow-2xl overflow-hidden">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 md:w-7 md:h-7 bg-white flex items-center justify-center">
-              <Terminal className="w-3 h-3 md:w-4 md:h-4 text-black" />
-            </div>
-            <span className="text-[10px] md:text-xs font-bold uppercase tracking-tighter text-white">Prompt Engine</span>
+            <Sparkles className="w-5 h-5 text-white fill-current" />
+            <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-white">PROMPT-ENHANCER</span>
           </div>
           
           <div className="hidden md:flex items-center gap-8">
@@ -125,10 +123,8 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 md:mb-20">
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-6 md:mb-8">
-                <div className="w-7 h-7 md:w-8 md:h-8 bg-white flex items-center justify-center rounded-sm">
-                  <Terminal className="w-4 h-4 md:w-5 md:h-5 text-black" />
-                </div>
-                <span className="text-xs md:text-sm font-bold uppercase tracking-tighter">Prompt Engine</span>
+                <Sparkles className="w-6 h-6 text-white fill-current" />
+                <span className="text-xs md:text-sm font-bold uppercase tracking-widest">PROMPT-ENHANCER</span>
               </div>
               <p className="text-[10px] md:text-xs text-white/60 uppercase tracking-widest max-w-sm leading-relaxed font-medium">
                 The bridge between human intent and artificial intelligence. 
@@ -157,7 +153,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <div className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.4em] text-white/40">
               Application crafted by <a href="https://harshrathod-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-white hover:text-white/60 transition-colors">Harsh Rathod</a>
             </div>
-            <p className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.5em]">&copy; 2026 Prompt Engine. All rights reserved.</p>
+            <p className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.5em]">&copy; 2026 PROMPT-ENHANCER. All rights reserved.</p>
           </div>
         </div>
 

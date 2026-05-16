@@ -48,10 +48,8 @@ export default function WorkspaceHeader({ user, onLogout }: WorkspaceHeaderProps
     <header className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50">
       <div className="flex flex-col">
          <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
-           <Sparkles className="w-5 h-5 fill-current" /> P.E.E
+           <Sparkles className="w-5 h-5 fill-current" /> PROMPT-ENHANCER
          </h1>
-         <span className="text-[10px] tracking-widest text-muted-foreground uppercase hidden sm:block">Prompt Enhancement Engine</span>
-         <span className="text-[10px] tracking-widest text-muted-foreground uppercase sm:hidden">Prompt Engine</span>
       </div>
       
       <div className="flex items-center gap-4 relative">
