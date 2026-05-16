@@ -263,51 +263,50 @@ export default function HistoryLogs({ history, loading, appState, onCopy, copied
 
       <Dialog open={!!currentSelected} onOpenChange={() => setSelectedHistory(null)}>
         <DialogContent showCloseButton={false} className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[1200px] w-full border-border bg-background rounded-none shadow-2xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="p-6 border-b border-border bg-muted/20">
+          <DialogHeader className="p-4 sm:p-6 border-b border-border bg-muted/20">
+            {/* Row 1: Title + Close — always visible on all screen sizes */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <DialogTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Info className="w-4 h-4" /> Record Details
-                </DialogTitle>
-                {currentSelected && (
+              <DialogTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                <Info className="w-4 h-4" /> Record Details
+              </DialogTitle>
+              <button
+                onClick={() => setSelectedHistory(null)}
+                className="p-1.5 border border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors flex-shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Row 2: Actions + Category badge */}
+            {currentSelected && (
+              <div className="flex items-center gap-3 flex-wrap mt-2">
+                <button
+                  onClick={() => onToggleFavorite(currentSelected.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors",
+                    currentSelected.isFavorite ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Star className={cn("w-3 h-3", currentSelected.isFavorite && "fill-current")} />
+                  {currentSelected.isFavorite ? "Favorited" : "Mark Favorite"}
+                </button>
+                {onDelete && (
                   <button
-                    onClick={() => onToggleFavorite(currentSelected.id)}
-                    className={cn(
-                      "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-colors",
-                      currentSelected.isFavorite ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-                    )}
+                    onClick={() => {
+                      onDelete(currentSelected.id);
+                      setSelectedHistory(null);
+                    }}
+                    className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-red-500 transition-colors"
                   >
-                    <Star className={cn("w-3 h-3", currentSelected.isFavorite && "fill-current")} />
-                    {currentSelected.isFavorite ? "Favorited" : "Mark Favorite"}
+                    <Trash2 className="w-3 h-3" />
+                    Delete
                   </button>
                 )}
+                <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest ml-auto">
+                  {currentSelected.category}
+                </span>
               </div>
-              {currentSelected && (
-                <div className="flex items-center gap-3">
-                  {onDelete && (
-                    <button
-                      onClick={() => {
-                        onDelete(currentSelected.id);
-                        setSelectedHistory(null);
-                      }}
-                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      Delete
-                    </button>
-                  )}
-                  <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest">
-                    {currentSelected.category}
-                  </span>
-                  <button
-                    onClick={() => setSelectedHistory(null)}
-                    className="p-1.5 border border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors ml-1"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-8">
