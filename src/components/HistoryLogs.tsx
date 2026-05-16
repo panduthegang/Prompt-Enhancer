@@ -130,7 +130,7 @@ export default function HistoryLogs({ history, loading, appState, onCopy, copied
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 5 }}
-                                className="absolute bottom-full left-0 right-0 mb-1 bg-background border border-border shadow-2xl z-30 max-h-60 overflow-y-auto scrollbar-hide"
+                                className="absolute bottom-full left-0 right-0 mb-1 bg-background border border-border shadow-2xl z-30 max-h-60 overflow-y-auto"
                               >
                                 {CATEGORIES.map(c => (
                                   <button 

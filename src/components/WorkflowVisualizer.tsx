@@ -49,7 +49,7 @@ export default function WorkflowVisualizer({ appState }: WorkflowVisualizerProps
     <div className="w-full max-w-6xl mx-auto px-4 pt-28 pb-8 z-10 flex flex-col items-center">
       <div 
         ref={scrollContainerRef}
-        className="flex w-full overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory items-start md:justify-between relative px-4 py-2"
+        className="flex w-full overflow-x-auto scroll-smooth snap-x snap-mandatory items-start md:justify-between relative px-4 py-2"
       >
         {/* Connection Lines */}
         <div className="absolute top-6 left-0 right-0 h-px bg-border -z-20 min-w-[1000px] md:min-w-0 mx-8" />

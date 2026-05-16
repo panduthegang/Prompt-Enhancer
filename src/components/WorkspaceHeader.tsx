@@ -45,7 +45,7 @@ export default function WorkspaceHeader({ user, onLogout }: WorkspaceHeaderProps
   );
 
   return (
-    <header className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50">
+    <header className="fixed top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-center z-50 bg-background/80 backdrop-blur-md border-b border-border sm:bg-transparent sm:backdrop-blur-none sm:border-b-0">
       <div className="flex flex-col">
          <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-2">
            <Sparkles className="w-5 h-5 fill-current" /> PROMPT-ENHANCER
