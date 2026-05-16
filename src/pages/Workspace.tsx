@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { useAuth } from "../hooks/useAuth";
 import { detectIntent, enhancePrompt } from "../services/geminiService";
+import { addPrompt, subscribeToPrompts, toggleFavorite, deletePrompt } from "../services/promptService";
 import { PromptHistory, IntentDetectionResult, EnhancementResult } from "../types";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 
@@ -28,8 +29,9 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
   const [currentIntent, setCurrentIntent] = useState<IntentDetectionResult | null>(null);
   const [currentResult, setCurrentResult] = useState<EnhancementResult | null>(null);
   
-  // Data State
+  // Data State (now powered by Firestore real-time listener)
   const [history, setHistory] = useState<PromptHistory[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
   // Hook for speech service
@@ -37,16 +39,25 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
     setInput((prev) => (prev + " " + transcript).trim());
   });
 
+  // Real-time Firestore subscription for prompt history
   useEffect(() => {
-    const saved = localStorage.getItem("promptEngineHistory");
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch (e) {
-        console.error(e);
+    if (!user) return;
+
+    setHistoryLoading(true);
+    const unsubscribe = subscribeToPrompts(
+      user.uid,
+      (prompts) => {
+        setHistory(prompts);
+        setHistoryLoading(false);
+      },
+      (error) => {
+        console.error("Failed to load history:", error);
+        setHistoryLoading(false);
       }
-    }
-  }, []);
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleProcess = async () => {
     if (!input.trim() || appState !== "idle") return;
@@ -76,23 +87,19 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
     }
 
     setAppState("enhancing");
-    if (currentIntent) {
+    if (currentIntent && user) {
       try {
         const result = await enhancePrompt(currentIntent);
         if (result) {
           setCurrentResult(result);
           setAppState("result");
           
-          const newHistoryItem: PromptHistory = {
-            id: Date.now().toString(),
-            timestamp: Date.now(),
+          // Save to Firestore (real-time listener will auto-update the history state)
+          await addPrompt(user.uid, {
             original: currentIntent.cleanedInput,
             optimized: result.optimizedPrompt,
             category: currentIntent.category,
-          };
-          const updated = [newHistoryItem, ...history.slice(0, 49)];
-          setHistory(updated);
-          localStorage.setItem("promptEngineHistory", JSON.stringify(updated));
+          });
         } else {
           setAppState("error");
         }
@@ -108,12 +115,36 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
     setTimeout(() => setCopiedPrompt(null), 2000);
   };
 
-  const handleToggleFavorite = (id: string) => {
-    const updated = history.map(item => 
-      item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
+  const handleToggleFavorite = async (id: string) => {
+    if (!user) return;
+    const item = history.find(h => h.id === id);
+    if (!item) return;
+
+    // Optimistic UI update
+    setHistory(prev =>
+      prev.map(h => (h.id === id ? { ...h, isFavorite: !h.isFavorite } : h))
     );
-    setHistory(updated);
-    localStorage.setItem("promptEngineHistory", JSON.stringify(updated));
+
+    try {
+      await toggleFavorite(user.uid, id, !!item.isFavorite);
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      // Revert optimistic update on error
+      setHistory(prev =>
+        prev.map(h => (h.id === id ? { ...h, isFavorite: item.isFavorite } : h))
+      );
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+
+    try {
+      await deletePrompt(user.uid, id);
+      // Real-time listener will auto-remove it from state
+    } catch (error) {
+      console.error("Failed to delete prompt:", error);
+    }
   };
 
   const reset = () => {
@@ -191,10 +222,12 @@ export default function Workspace({ onLogout }: WorkspaceProps) {
 
       <HistoryLogs 
         history={history} 
+        loading={historyLoading}
         appState={appState} 
         onCopy={handleCopy} 
         copiedPrompt={copiedPrompt} 
         onToggleFavorite={handleToggleFavorite}
+        onDelete={handleDelete}
       />
     </>
   );

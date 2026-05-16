@@ -1,9 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // User profile: only the owner can read/write their own document
     match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User's prompt history: subcollection under each user doc
+    // Each user can only access their own prompts — no cross-user access
+    match /users/{userId}/prompts/{promptId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.keys().hasAll(['original', 'optimized', 'category', 'isFavorite', 'createdAt'])
+                    && request.resource.data.original is string
+                    && request.resource.data.optimized is string
+                    && request.resource.data.category is string
+                    && request.resource.data.isFavorite is bool;
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isFavorite']);
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

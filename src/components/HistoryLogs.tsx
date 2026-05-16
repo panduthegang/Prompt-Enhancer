@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Filter, ChevronDown, ArrowRight, Info, Copy, Check, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Search, Filter, ChevronDown, ArrowRight, Info, Copy, Check, ChevronLeft, ChevronRight, Star, Trash2, Loader2, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
 import { PromptHistory, PromptCategory } from "../types";
@@ -21,13 +21,15 @@ const ITEMS_PER_PAGE = 4;
 
 interface HistoryLogsProps {
   history: PromptHistory[];
+  loading?: boolean;
   appState: string;
   onCopy: (text: string) => void;
   copiedPrompt: string | null;
   onToggleFavorite: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, onToggleFavorite }: HistoryLogsProps) {
+export default function HistoryLogs({ history, loading, appState, onCopy, copiedPrompt, onToggleFavorite, onDelete }: HistoryLogsProps) {
   const [selectedHistory, setSelectedHistory] = useState<PromptHistory | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<FilterType>("All");
@@ -85,7 +87,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
   return (
     <>
       <AnimatePresence>
-        {(appState === "idle" || appState === "result") && history.length > 0 && (
+        {(appState === "idle" || appState === "result") && (loading || history.length > 0) && (
           <motion.footer 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -195,7 +197,12 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                  </div>
               </div>
               
-              {filteredHistory.length === 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-12 gap-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground uppercase tracking-widest">Loading history...</span>
+                </div>
+              ) : filteredHistory.length === 0 ? (
                 <div className="text-center py-8 text-xs text-muted-foreground uppercase tracking-widest border border-dashed border-border">
                   No records match your filters.
                 </div>
@@ -227,6 +234,18 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                              >
                                <Star className={cn("w-3.5 h-3.5", item.isFavorite && "fill-current")} />
                              </button>
+                             {onDelete && (
+                               <button
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   onDelete(item.id);
+                                 }}
+                                 className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
+                                 title="Delete prompt"
+                               >
+                                 <Trash2 className="w-3.5 h-3.5" />
+                               </button>
+                             )}
                              <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                           </div>
                         </div>
@@ -243,7 +262,7 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
       </AnimatePresence>
 
       <Dialog open={!!currentSelected} onOpenChange={() => setSelectedHistory(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[1200px] w-full border-border bg-background rounded-none shadow-2xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent showCloseButton={false} className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[1200px] w-full border-border bg-background rounded-none shadow-2xl p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="p-6 border-b border-border bg-muted/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -264,9 +283,29 @@ export default function HistoryLogs({ history, appState, onCopy, copiedPrompt, o
                 )}
               </div>
               {currentSelected && (
-                 <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest">
-                   {currentSelected.category}
-                 </span>
+                <div className="flex items-center gap-3">
+                  {onDelete && (
+                    <button
+                      onClick={() => {
+                        onDelete(currentSelected.id);
+                        setSelectedHistory(null);
+                      }}
+                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  )}
+                  <span className="text-[10px] px-2 py-1 border border-border font-bold uppercase tracking-widest">
+                    {currentSelected.category}
+                  </span>
+                  <button
+                    onClick={() => setSelectedHistory(null)}
+                    className="p-1.5 border border-border text-muted-foreground hover:border-foreground hover:text-foreground transition-colors ml-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )}
             </div>
           </DialogHeader>

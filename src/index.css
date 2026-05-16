@@ -71,13 +71,29 @@
   }
 }
 
-/* Hide scrollbar but keep scroll functionality */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Custom boxy scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--foreground);
+  border: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.3 0 0);
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--foreground) var(--background);
 }
 
 .bg-grid-pattern {
